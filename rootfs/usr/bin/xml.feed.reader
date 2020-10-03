@@ -1,0 +1,30 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+use XML::Feed;
+
+my $src = shift;
+my $output_format = shift || 'Atom';
+
+$output_format =~ /^(?:RSS 0.91|RSS 1.0|RSS 2.0|Atom)$/ or die "Unknown output format: $output_format.\n";
+
+die "Usage: $0 FILE|URL [output_format]\n" if not $src;
+
+#binmode STDOUT, ':encoding(UTF-8)';
+#binmode STDERR, ':encoding(UTF-8)';
+
+my $source = $src;
+
+if ($src =~ m{^https?://}) {
+    $source = URI->new($src);
+}
+else {
+    -f $source or die "'$source' does not look like a URL and it does not exist on the file-system either.\n";
+}
+
+my $feed = XML::Feed->parse($source) or die XML::Feed->errstr;
+
+my $output_feed = $feed->format eq $output_format ? $feed : $feed->convert($output_format);
+
+print $output_feed->as_xml;
